@@ -7,10 +7,92 @@
     <style>
         body {
             margin: 0px;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .pointer {
+            cursor: pointer;
+        }
+
+        .startup {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            background: gray;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            justify-content: center;
+
+        }
+
+        .startup .dialog {
+            background: lightgreen;
+            width: 40vw;
+            height: 15vh;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .startup .dialog label {
+            margin-bottom: 5px;
+        }
+
+        .startup .dialog input {
+            height: 40px;
+            width: 70%;
+            font-size: 14px;
+            padding: 0px 10px;
+        }
+
+
+        .startup .dialog .btn {
+            width: fit-content;
+            height: 30px;
+            font-size: 12px;
+            background: #337ab7;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            margin-top: 5px;
+        }
+
+        .messenger {}
+
+        header {
+            background: #611a4b;
+            color: #fff;
+            height: 7vh;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header h4 {
+            margin: 0px;
+            height: inherit;
+            display: flex;
+            width: fit-content;
+            align-items: center;
+            padding: 0px 10px;
+        }
+
+        header select {
+            width: 100px;
+            display: flex;
+            align-self: center;
+            margin-right: 10vw;
+        }
+
+        header h4 img {
+            width: 24px;
         }
 
         #messages {
-            height: 90vh;
+            height: 83vh;
             margin: 0px;
             /* Red bg */
             background: url('/images/bg-texture-red.png');
@@ -32,8 +114,8 @@
             width: fit-content;
             padding: 10px;
             margin-top: 5px;
-            font-family: 'Open Sans', sans-serif;
             font-size: 14px;
+            color: #611a4b;
         }
 
         #messages li.left {
@@ -62,7 +144,7 @@
         #send {
             width: 15vw;
             height: 10vh;
-            font-size: 30px;
+            font-size: 22px;
             padding: 0;
             /* border-top: 1px solid #cdcdcd; */
             border: none;
@@ -74,33 +156,145 @@
 </head>
 
 <body>
-    <ul id="messages">
-        <li class="left">
-            Hello world!
-        </li>
+    <div class="startup" id="startup">
+        <div class="dialog">
+            <label>Username</label>
+            <input type="text" id="username" />
+            <button id="connect" class="btn">Connect</button>
+        </div>
+    </div>
+    <div class="messenger" id="messenger">
+        <header>
+            <h4><img class="pointer" src="/images/hamburger.png" />&nbsp;Messenger</h4>
+            <select id="users"></select>
+        </header>
+        <ul id="messages">
+            <li class="left">
+                Hello world!
+            </li>
 
-        <li class="right">
-            hey are you there
-        </li>
-    </ul>
-    <textarea autocomplete="off" id="user-input"></textarea>
-    <button id="send">Send</button>
+            <li class="right">
+                hey are you there
+            </li>
+        </ul>
+        <textarea autocomplete="off" id="user-input"></textarea>
+        <button id="send">Send</button>
+    </div>
 </body>
 
 <script type="text/javascript">
-    var socket = io();
-    socket.on('news', function (data) {
+    const localStorageKey = 'messenger-username';
+    const startup = document.getElementById('startup');
+    // const socket = io({ transports: ['websocket'], upgrade: false });
+    const socket = io.connect(window.location.origin, { transports: ['websocket'] });
+
+    if (localStorage.getItem(localStorageKey)) {
+        console.log(startup);
+        startup.style.display = "none";
+        console.log(`Re-Creating connection for ${localStorage.getItem(localStorageKey)}`);
+        socket.emit('message', {
+            username: localStorage.getItem(localStorageKey)
+        });
+    }
+    const messenger = document.getElementById('messenger');
+    const messages = document.getElementById('messages');
+    const userInput = document.getElementById('user-input');
+    userInput.focus();
+    const username = document.getElementById('username');
+    const users = document.getElementById('users');
+    const send = document.getElementById('send');
+    const connect = document.getElementById('connect');
+
+    pushMessageToList = (data) => {
+        let element = document.createElement('LI');
+        if (data.isClient) {
+            element.className = 'right';
+        } else {
+            element.className = 'left';
+        }
+        element.innerText = data.message;
+        messages.appendChild(element);
+    }
+
+    sendMessage = (msg) => {
+        if (users.value) {
+            socket.emit('chat message', {
+                to: users.value,
+                type: 'text',
+                message: msg
+            });
+        } else {
+            pushMessageToList({
+                type: 'text',
+                message: "Please select an User"
+            });
+        }
+    };
+
+    createConnection = () => {
+        console.log(`Creating connection for ${localStorage.getItem(localStorageKey)}`);
+        socket.emit('message', {
+            username: localStorage.getItem(localStorageKey)
+        });
+    }
+
+    reset = () => {
+        userInput.value = "";
+    }
+
+    socket.on('status', function (data) {
         console.log(data);
-        socket.emit('my other event', { my: 'data' });
+        if (data.users) {
+            data.users.forEach(element => {
+                let el = document.createElement('OPTION');
+                el.value = element;
+                el.innerText = element;
+                users.appendChild(el);
+            });
+        }
     });
 
+    socket.on('chat message', function (data) {
+        console.log(data);
+        pushMessageToList(data);
+    });
 
-    var messages = document.getElementById('messages');
-    var userInput = document.getElementById('user-input');
-    var send = document.getElementById('send');
+    socket.on('message', function (data) {
+        console.log(data);
+        startup.style.display = "none";
+        pushMessageToList(data);
+    });
 
-    send.onclick = function (e) {
+    socket.on('disconnect', function (data) {
+        console.log(`${localStorage.getItem(localStorageKey)} - User disconnected`);
+        localStorage.removeItem(localStorageKey);
+    });
+
+    connect.onclick = (e) => {
+        if (username.value) {
+            localStorage.setItem(localStorageKey, username.value);
+            createConnection();
+        }
+    }
+
+    send.onclick = (e) => {
         console.log(userInput.value);
+        var message = userInput.value;
+        if (message) {
+            pushMessageToList({
+                type: "text",
+                message: message,
+                isClient: true
+            });
+            sendMessage(message);
+            reset();
+            userInput.focus();
+        } else {
+            pushMessageToList({
+                type: "text",
+                message: 'Provide a message to send'
+            });
+        }
     }
 
 </script>
