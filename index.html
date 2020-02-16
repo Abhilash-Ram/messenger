@@ -343,6 +343,7 @@
     }
 
     createUserList = (data) => {
+        let currentValue = users.value;
         let userList = data;
         userList.splice(userList.indexOf(getUsername()), 1)
         users.options.length = 0;
@@ -354,6 +355,7 @@
                 users.appendChild(el);
             });
         }
+        users.value = currentValue;
     }
 
     socket.on('status', function (data) {
