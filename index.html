@@ -1,0 +1,108 @@
+<html>
+
+<head>
+    <title>Messenger</title>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+    <script src="node_modules/socket.io-client/dist/socket.io.js"></script>
+    <style>
+        body {
+            margin: 0px;
+        }
+
+        #messages {
+            height: 90vh;
+            margin: 0px;
+            /* Red bg */
+            background: url('/images/bg-texture-red.png');
+            background-size: cover;
+            /* Green bg */
+            /* background: url('/images/bg-texture-green.png'); */
+            /* background-size: contain; */
+            padding: 10px;
+            list-style: none;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #messages li {
+            background: #fff;
+            max-width: 80vw;
+            border-radius: 6px;
+            width: fit-content;
+            padding: 10px;
+            margin-top: 5px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 14px;
+        }
+
+        #messages li.left {
+            border-bottom-left-radius: 0px;
+        }
+
+        #messages li.right {
+            align-self: flex-end;
+            border-bottom-right-radius: 0px;
+        }
+
+        #user-input {
+            height: 10vh;
+            width: 85vw;
+            float: left;
+            border: 1px solid #cdcdcd;
+            resize: none;
+            font-size: 16px;
+            padding: 5px 10px;
+            box-sizing: border-box;
+            font-family: sans-serif;
+            outline: none;
+            /* scroll-behavior: smooth; */
+        }
+
+        #send {
+            width: 15vw;
+            height: 10vh;
+            font-size: 30px;
+            padding: 0;
+            /* border-top: 1px solid #cdcdcd; */
+            border: none;
+            background: #6646ee;
+            color: #fff;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+    <ul id="messages">
+        <li class="left">
+            Hello world!
+        </li>
+
+        <li class="right">
+            hey are you there
+        </li>
+    </ul>
+    <textarea autocomplete="off" id="user-input"></textarea>
+    <button id="send">Send</button>
+</body>
+
+<script type="text/javascript">
+    var socket = io();
+    socket.on('news', function (data) {
+        console.log(data);
+        socket.emit('my other event', { my: 'data' });
+    });
+
+
+    var messages = document.getElementById('messages');
+    var userInput = document.getElementById('user-input');
+    var send = document.getElementById('send');
+
+    send.onclick = function (e) {
+        console.log(userInput.value);
+    }
+
+</script>
+
+</html>
