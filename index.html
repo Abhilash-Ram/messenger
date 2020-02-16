@@ -160,6 +160,7 @@
             display: flex;
             flex-direction: column;
             overflow-y: scroll;
+            scroll-behavior: smooth;
         }
 
         #messages li {
@@ -180,6 +181,21 @@
         #messages li.right {
             align-self: flex-end;
             border-bottom-right-radius: 0px;
+        }
+
+        footer {
+            position: relative;
+        }
+
+        footer #info {
+            height: 5vh;
+            position: absolute;
+            width: 100vw;
+            top: -5vh;
+            margin: 0;
+            color: #fff;
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         #user-input {
@@ -227,8 +243,11 @@
         </header>
         <ul id="messages">
         </ul>
-        <textarea autocomplete="off" id="user-input"></textarea>
-        <button id="send">Send</button>
+        <footer>
+            <p id="info"></p>
+            <textarea autocomplete="off" id="user-input"></textarea>
+            <button id="send">Send</button>
+        </footer>
     </div>
 </body>
 
@@ -236,14 +255,26 @@
     const localStorageKey = 'messenger-username';
     const startup = document.getElementById('startup');
     // const socket = io({ transports: ['websocket'], upgrade: false });
-    const socket = io.connect(window.location.origin, { transports: ['websocket'] });
+    const socket = io.connect(window.location.origin, {
+        transports: ['websocket'],
+        autoConnect: true
+    });
 
-    if (localStorage.getItem(localStorageKey)) {
-        console.log(startup);
+    getUsername = () => {
+        return localStorage.getItem(localStorageKey);
+    }
+
+    getTime = () => {
+        return new Intl.DateTimeFormat('en-IN', {
+            hour: 'numeric', minute: 'numeric'
+        }).format(new Date());
+    }
+
+    if (getUsername()) {
         startup.style.display = "none";
-        console.log(`Re-Creating connection for ${localStorage.getItem(localStorageKey)}`);
+        console.log(`Re-Creating connection for ${getUsername()}`);
         socket.emit('message', {
-            username: localStorage.getItem(localStorageKey)
+            username: getUsername()
         });
     }
     const messenger = document.getElementById('messenger');
@@ -254,6 +285,7 @@
     const users = document.getElementById('users');
     const send = document.getElementById('send');
     const connect = document.getElementById('connect');
+    const info = document.getElementById('info');
 
     pushMessageToList = (data) => {
         let element = document.createElement('LI');
@@ -262,8 +294,9 @@
         } else {
             element.className = 'left';
         }
-        element.innerText = data.message;
+        element.innerText = `${data.message} \n ${getTime()}`;
         messages.appendChild(element);
+        messages.scrollTo(0, messages.scrollHeight);
     }
 
     sendMessage = (msg) => {
@@ -271,7 +304,7 @@
             socket.emit('chat message', {
                 to: users.value,
                 type: 'text',
-                message: msg
+                message: msg.trim()
             });
         } else {
             pushMessageToList({
@@ -292,18 +325,23 @@
         userInput.value = "";
     }
 
-    socket.on('status', function (data) {
-        console.log(data);
-        let userList = data.users;
+    createUserList = (data) => {
+        let userList = data;
         userList.splice(userList.indexOf(getUsername()), 1)
-        if (data.users) {
-            data.users.forEach(element => {
+        users.options.length = 0;
+        if (userList) {
+            userList.forEach(element => {
                 let el = document.createElement('OPTION');
                 el.value = element;
                 el.innerText = element;
                 users.appendChild(el);
             });
         }
+    }
+
+    socket.on('status', function (data) {
+        console.log(data);
+        createUserList(data.users);
     });
 
     socket.on('chat message', function (data) {
@@ -329,6 +367,40 @@
         }
     }
 
+    userInput.onfocus = (e) => {
+        console.log(e);
+        if (users.value) {
+            socket.emit('focus', {
+                from: getUsername(),
+                to: users.value
+            });
+        }
+    }
+
+    userInput.onblur = (e) => {
+        if (users.value) {
+            socket.emit('blur', {
+                from: getUsername(),
+                to: users.value
+            });
+        }
+    }
+
+    socket.on('focus', (data) => {
+        info.style.display = "block";
+        info.innerText = `${data}`;
+    });
+
+    socket.on('blur', (data) => {
+        info.innerText = `${data}`;
+        info.style.display = "none";
+    });
+
+    socket.on('alive', (data) => {
+        console.log(data)
+        createUserList(data.users);
+    });
+
     send.onclick = (e) => {
         console.log(userInput.value);
         var message = userInput.value;
@@ -349,10 +421,9 @@
         }
     }
 
-    getUsername = () => {
-        return localStorage.getItem(localStorageKey);
-    }
-
+    setInterval(() => {
+        socket.emit('alive', {});
+    }, 5000);
 </script>
 
 </html>

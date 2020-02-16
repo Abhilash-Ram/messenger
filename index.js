@@ -57,6 +57,24 @@ io.on('connection', function (socket) {
     console.log('I received a private message by ', from, ' saying ', msg);
   });
 
+  socket.on('focus', function (data) {
+    if (users[data.to]) {
+      users[data.to].emit('focus', 'Typing...');
+    }
+  });
+
+  socket.on('blur', function (data) {
+    if (users[data.to]) {
+      users[data.to].emit('blur', '');
+    }
+  });
+
+  socket.on('alive', function (data) {
+    socket.emit('alive', {
+      users: Object.keys(users)
+    });
+  });
+
   socket.on('disconnect', function (reason) {
     console.log(`disconnect`, reason);
     if (reason === 'io server disconnect') {
