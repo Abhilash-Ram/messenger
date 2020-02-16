@@ -44,10 +44,10 @@ io.on('connection', function (socket) {
   socket.on('message', function (data) {
     var payload = {
       type: 'text',
-      message: "Welcome"
+      message: "Welcome to Messenger app!"
     }
     if (users[data.username]) {
-      payload.message = `Welcome Back ${data.username}`;
+      payload.message = `Welcome Back ${data.username} :)`;
     }
     users[data.username] = socket;
     socket.emit('message', payload);

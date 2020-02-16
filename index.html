@@ -112,7 +112,9 @@
             margin-top: 5px;
         }
 
-        .messenger {}
+        .messenger {
+            height: 100vh;
+        }
 
         header {
             background: #611a4b;
@@ -136,6 +138,7 @@
             display: flex;
             align-self: center;
             margin-right: 10vw;
+            background: #fff;
         }
 
         header h4 img {
@@ -156,6 +159,7 @@
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
+            overflow-y: scroll;
         }
 
         #messages li {
@@ -195,7 +199,7 @@
         #send {
             width: 15vw;
             height: 10vh;
-            font-size: 22px;
+            font-size: 20px;
             padding: 0;
             /* border-top: 1px solid #cdcdcd; */
             border: none;
@@ -217,16 +221,11 @@
     <div class="messenger" id="messenger">
         <header>
             <h4><img class="pointer" src="/images/hamburger.png" />&nbsp;Messenger</h4>
-            <select id="users"></select>
+            <select id="users">
+                <option hidden selected>Select User</option>
+            </select>
         </header>
         <ul id="messages">
-            <li class="left">
-                Hello world!
-            </li>
-
-            <li class="right">
-                hey are you there
-            </li>
         </ul>
         <textarea autocomplete="off" id="user-input"></textarea>
         <button id="send">Send</button>
@@ -295,6 +294,8 @@
 
     socket.on('status', function (data) {
         console.log(data);
+        let userList = data.users;
+        userList.splice(userList.indexOf(getUsername()), 1)
         if (data.users) {
             data.users.forEach(element => {
                 let el = document.createElement('OPTION');
@@ -346,6 +347,10 @@
                 message: 'Provide a message to send'
             });
         }
+    }
+
+    getUsername = () => {
+        return localStorage.getItem(localStorageKey);
     }
 
 </script>
