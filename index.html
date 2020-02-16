@@ -133,12 +133,23 @@
             padding: 0px 10px;
         }
 
-        header select {
+        header .tools {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        header .tools select {
             width: 100px;
             display: flex;
             align-self: center;
             margin-right: 10vw;
             background: #fff;
+        }
+
+        header .tools img {
+            width: 30px;
         }
 
         header h4 img {
@@ -237,9 +248,12 @@
     <div class="messenger" id="messenger">
         <header>
             <h4><img class="pointer" src="/images/hamburger.png" />&nbsp;Messenger</h4>
-            <select id="users">
-                <option hidden selected>Select User</option>
-            </select>
+            <div class="tools">
+                <select id="users">
+                    <option hidden selected>Select User</option>
+                </select>
+                <img src="/images/logout.png" id="logout" alt="logout" />
+            </div>
         </header>
         <ul id="messages">
         </ul>
@@ -254,6 +268,15 @@
 <script type="text/javascript">
     const localStorageKey = 'messenger-username';
     const startup = document.getElementById('startup');
+    const messenger = document.getElementById('messenger');
+    const messages = document.getElementById('messages');
+    const userInput = document.getElementById('user-input');
+    const username = document.getElementById('username');
+    const users = document.getElementById('users');
+    const send = document.getElementById('send');
+    const connect = document.getElementById('connect');
+    const info = document.getElementById('info');
+    const logout = document.getElementById('logout');
     // const socket = io({ transports: ['websocket'], upgrade: false });
     const socket = io.connect(window.location.origin, {
         transports: ['websocket'],
@@ -276,16 +299,10 @@
         socket.emit('message', {
             username: getUsername()
         });
+        userInput.focus();
+    } else {
+        username.focus();
     }
-    const messenger = document.getElementById('messenger');
-    const messages = document.getElementById('messages');
-    const userInput = document.getElementById('user-input');
-    userInput.focus();
-    const username = document.getElementById('username');
-    const users = document.getElementById('users');
-    const send = document.getElementById('send');
-    const connect = document.getElementById('connect');
-    const info = document.getElementById('info');
 
     pushMessageToList = (data) => {
         let element = document.createElement('LI');
@@ -421,7 +438,18 @@
         }
     }
 
-    setInterval(() => {
+    logout.onclick = () => {
+        socket.emit('disconnect', 'User logged out');
+        localStorage.removeItem(localStorageKey);
+        users.options.length = 0;
+        messages.innerHTML = "";
+        username.value = "";
+        reset();
+        startup.style.display = "flex"
+        username.focus();
+    }
+
+    var heartbeat = setInterval(() => {
         socket.emit('alive', {});
     }, 5000);
 </script>
