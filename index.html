@@ -237,7 +237,7 @@
     </style>
 </head>
 
-<body onunload="sendBrowserClosedMessageToServer()">
+<body>
     <div class="startup" id="startup">
         <div class="dialog">
             <label>Username</label>
@@ -458,13 +458,6 @@
         startup.style.display = "flex"
         username.focus();
     }
-
-    sendBrowserClosedMessageToServer = () => {
-        socket.emit('disconnect', {
-            username: localStorage.getItem(localStorageKey),
-            message: 'User logged out'
-        });
-    };
 
     var heartbeat = setInterval(() => {
         socket.emit('alive', {});
