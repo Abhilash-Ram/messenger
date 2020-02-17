@@ -237,7 +237,7 @@
     </style>
 </head>
 
-<body>
+<body onunload="sendBrowserClosedMessageToServer()">
     <div class="startup" id="startup">
         <div class="dialog">
             <label>Username</label>
@@ -416,8 +416,12 @@
     });
 
     socket.on('alive', (data) => {
-        console.log(data)
+        console.log(data);
         createUserList(data.users);
+    });
+
+    socket.on('logout', (data) => {
+        console.log(data);
     });
 
     send.onclick = (e) => {
@@ -441,7 +445,11 @@
     }
 
     logout.onclick = () => {
-        socket.emit('disconnect', 'User logged out');
+        socket.emit('logout', {
+            username: localStorage.getItem(localStorageKey),
+            message: 'User logged out'
+        });
+        socket.emit('disconnect');
         localStorage.removeItem(localStorageKey);
         users.options.length = 0;
         messages.innerHTML = "";
@@ -450,6 +458,13 @@
         startup.style.display = "flex"
         username.focus();
     }
+
+    sendBrowserClosedMessageToServer = () => {
+        socket.emit('disconnect', {
+            username: localStorage.getItem(localStorageKey),
+            message: 'User logged out'
+        });
+    };
 
     var heartbeat = setInterval(() => {
         socket.emit('alive', {});

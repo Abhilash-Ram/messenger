@@ -75,6 +75,11 @@ io.on('connection', function (socket) {
     });
   });
 
+  socket.on('logout', function (data) {
+    delete users[data.username];
+    socket.emit('logout', 'User removed from list');
+  });
+
   socket.on('disconnect', function (reason) {
     console.log(`disconnect`, reason);
     if (reason === 'io server disconnect') {
